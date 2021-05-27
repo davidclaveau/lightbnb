@@ -17,28 +17,15 @@ const pool = new Pool({
  */
 const getUserWithEmail = function(email) {
   return pool
-    .query(`SELECT * FROM users WHERE email = $1;`, [email])
+    .query(`
+      SELECT *
+        FROM users
+       WHERE email = $1;`, [email])
     .then((result) => {
-      console.log("res.rows EMAIL", result.rows);
       if (result.rows.length === 0) {
-        console.log("not unless I don't exist");
         return null;
       }
       return result.rows[0];
-      // const name = result.rows[0].name;
-      // const email = result.rows[0].email;
-      // const password = result.rows[0].password;
-      // const id = result.rows[0].id;
-
-      // const newObj = {
-      //   name,
-      //   email,
-      //   password,
-      //   id
-      // };
-      
-      // console.log("newObj", newObj)
-      // return newObj;
     })
     .catch((err) => {
       console.log("Logging in returned:", err);
@@ -53,9 +40,11 @@ exports.getUserWithEmail = getUserWithEmail;
  */
 const getUserWithId = function(id) {
   return pool
-    .query(`SELECT * FROM users WHERE id = $1`, [id])
+    .query(`
+      SELECT *
+        FROM users
+       WHERE id = $1`,[id])
     .then((result) => {
-      console.log("res.rows ID", result.rows)
       return result.rows[0].id;
     })
     .catch((err) => {
@@ -70,11 +59,12 @@ exports.getUserWithId = getUserWithId;
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser =  function(user) {
-  console.log("new user:", user)
   const values = [user.name, user.email, user.password];
 
   return pool
-    .query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,values)
+    .query(`
+    INSERT INTO users (name, email, password)
+    VALUES ($1, $2, $3) RETURNING *`,values)
     .then((result) => {
       return result.rows;
     })
@@ -92,11 +82,22 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return getAllProperties(null, 2);
-}
+  return pool
+    .query(`
+      SELECT *
+        FROM properties
+        JOIN reservations ON properties.id = reservations.property_id
+       WHERE reservations.guest_id = $1
+       LIMIT $2;`,[guest_id, limit])
+    .then((result) => {
+      console.log("res.rows Reservations:", result.rows);
+      return result.rows;
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
+};
 exports.getAllReservations = getAllReservations;
-
-/// Properties
 
 /**
  * Get all properties.
@@ -106,7 +107,10 @@ exports.getAllReservations = getAllReservations;
  */
  const getAllProperties = (options, limit = 10) => {
   return pool
-    .query(`SELECT * FROM properties LIMIT $1`, [limit])
+    .query(`
+      SELECT *
+        FROM properties
+       LIMIT $1`, [limit])
     .then((result) => {
       return result.rows;
     })
@@ -115,7 +119,6 @@ exports.getAllReservations = getAllReservations;
     });
 };
 exports.getAllProperties = getAllProperties;
-
 
 /**
  * Add a property to the database
